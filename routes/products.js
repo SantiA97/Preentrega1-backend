@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs'); // Para trabajar con el sistema de archivos
+const fs = require('fs');
 
-// Ruta GET /
+// Función para generar IDs únicos (puedes usar una librería como uuid)
+function generateUniqueId() {
+  return Math.random().toString(36).substring(2, 15);
+}
+
+// Ruta GET / (Listar productos)
 router.get('/', (req, res) => {
   const limit = req.query.limit;
-
   const products = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
 
   if (limit) {
@@ -15,7 +19,7 @@ router.get('/', (req, res) => {
   }
 });
 
-// Ruta GET 
+// Ruta GET /:pid (Obtener producto por ID)
 router.get('/:pid', (req, res) => {
   const pid = req.params.pid;
   const products = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
@@ -28,15 +32,13 @@ router.get('/:pid', (req, res) => {
   }
 });
 
-
+// Ruta POST / (Crear producto) - MODIFICADA
 router.post('/', (req, res) => {
   const newProduct = req.body;
   const products = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
 
-
-  newProduct.id = generateUniqueId(); // Implementa esta función
-
-  newProduct.status = true; 
+  newProduct.id = generateUniqueId();
+  newProduct.status = true;
 
   const requiredFields = ['title', 'description', 'code', 'price', 'stock', 'category'];
   const missingFields = requiredFields.filter(field => !newProduct[field]);
@@ -47,7 +49,10 @@ router.post('/', (req, res) => {
 
   products.push(newProduct);
   fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2));
-  res.status(201).json(newProduct); // 201 Created
+
+  // No emitimos el evento 'newProduct' aquí, ya que se maneja en el WebSocket
+
+  res.status(201).json(newProduct);
 });
 
 // Ruta PUT /:pid (Actualizar producto)
